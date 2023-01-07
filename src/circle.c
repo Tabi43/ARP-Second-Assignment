@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
   // Data structure for storing the bitmap file
   bmpfile_t *bmp;
   // Data type for defining pixel colors (BGRA)
-  rgb_pixel_t pixel = {255, 0, 0, 0};
+  rgb_pixel_t pixel = {255, 0, 0, 0}; 
 
   if (argc < 3) {
     printf("Please specify filename and radius as arguments!");

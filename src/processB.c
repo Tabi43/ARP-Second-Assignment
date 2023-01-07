@@ -11,6 +11,13 @@ int main(int argc, char const *argv[])
     // Infinite loop
     while (TRUE) {
 
+        /*sem wait*/
+        /*Starting critical section*/
+        /*Scan shared memory*/
+        /*Get contact with the circle*/
+        /*Finish critical section*/
+        /*sem signal*/
+
         // Get input in non-blocking mode
         int cmd = getch();
 
