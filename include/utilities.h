@@ -11,21 +11,26 @@
 #include <semaphore.h>
 
 /*Parameters*/
- int SM_WIDTH = 1600;
- int SM_HEIGHT = 600;
+const int SM_WIDTH = 1600;
+const int SM_HEIGHT = 600;
 
 int n_curses_width = 80;
 int n_curses_height = 30;
 
-int SM_FACTOR = 20;
+const int COLOR_SEG = SM_WIDTH*SM_HEIGHT;
+/*COLOR SEGMENT
+  0: Blue
+  1: Green
+  2: Red
+*/  
+const int SM_FACTOR = 20;
+const int BMP_CIRC_RADIUS = 60;
 
 #define shm_name "/AV"
+#define out_bmp "/out/tabi.bmp"
 
-int SHM_SIZE = SM_WIDTH*SM_HEIGHT*3;
+const int SHM_SIZE = SM_WIDTH*SM_HEIGHT*3;
 
 #define sem_path_1 "/sem_AV_1" //Sem_procuder
 #define sem_path_2 "/sem_AV_2" //Sem_consumer
 
-
-
-/*Functions*/
