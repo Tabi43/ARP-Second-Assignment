@@ -33,4 +33,3 @@ const int SHM_SIZE = SM_WIDTH*SM_HEIGHT*3;
 
 #define sem_path_1 "/sem_AV_1" //Sem_procuder
 #define sem_path_2 "/sem_AV_2" //Sem_consumer
-

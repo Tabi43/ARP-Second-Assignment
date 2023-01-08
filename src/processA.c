@@ -18,33 +18,30 @@ int print_counter = 0;
 bool take_snapshot(){
     char path[20];
 
-    /*Open semaphore*/ 
-    sem_t * sem_id1 = sem_open(sem_path_1, 0);
-    sem_t * sem_id2 = sem_open(sem_path_2, 0);
 
-    /*Sem wait*/
-    sem_wait(sem_id2);
-
-    snprintf(path, 20, "%s%d.bmp", out_bmp, print_counter);
+    /*snprintf(path, 20, "%s%d.bmp", out_bmp, print_counter);
     print_counter++;
+*/
+    for(int i = SM_HEIGHT/2; i < SM_HEIGHT; i++){
+        for(int j = SM_WIDTH/2; j < SM_WIDTH; j++){
+            bmp_set_pixel(bmp, i, j, pixel);
+        }
+    }
 
-    bmp_save(bmp, path);
+    bmp_save(bmp, "test.bmp");
 
-    /*sem signal*/
-    sem_post(sem_id1); 
-    sem_close(sem_id1);
-    sem_close(sem_id2);
+   
 }
 
 void draw__colored_circle_bmp(bmpfile_t * bmp, int xc, int yc){
     const int radius = 30;    
-    for (int i = xc-radius; i <xc+radius; i++){
+    /*for (int i = xc-radius; i <xc+radius; i++){
         for(int j = yc-radius; j<yc+radius; j++){
             if(sqrt(i*i + j*j) < radius) {
                 bmp_set_pixel(bmp, i, j, pixel);
             }
         }
-    }
+    }*/   
 }
 
 void draw__empty_circle_bmp(bmpfile_t * bmp, int xc, int yc){
@@ -69,8 +66,8 @@ void load_bmp_to_shm(bmpfile_t * bmp, int * ptr){
     sem_wait(sem_id2);
 
     /*Loading pixel*/
-    for(int i = 0; i < SM_WIDTH; i++){
-        for(int j = 0; j < SM_HEIGHT; j++){
+    for(int i = 0; i < SM_HEIGHT; i++){
+        for(int j = 0; j < SM_WIDTH; j++){
             pos = (i*SM_WIDTH)+j+1;
             ptr[pos] = bmp_get_pixel(bmp,i,j)->blue; 
             ptr[pos+COLOR_SEG] = bmp_get_pixel(bmp,i,j)->green; 
@@ -94,7 +91,7 @@ int main(int argc, char *argv[])
     init_console_ui();
 
     /*Create the bmp object*/
-    bmp = bmp_create(SM_WIDTH, SM_HEIGHT, 4);      
+    bmp = bmp_create(SM_WIDTH, SM_HEIGHT, 4);     
 
     /*Open shared memory*/
     shm_fd = shm_open(shm_name, O_WRONLY, 0666);
@@ -106,6 +103,15 @@ int main(int argc, char *argv[])
     ftruncate(shm_fd, SHM_SIZE);
 
     ptr = mmap(0, SHM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+
+    for(int i = SM_HEIGHT/2; i < SM_HEIGHT; i++){
+        for(int j = SM_WIDTH/2; j < SM_WIDTH; j++){
+            bmp_set_pixel(bmp, i, j, pixel);
+        }
+    }
+    
+
+    bmp_save(bmp, "test.bmp");
 
     // Infinite loop
     while (TRUE)
@@ -143,11 +149,12 @@ int main(int argc, char *argv[])
 
         // If input is an arrow key, move circle accordingly...
         else if(cmd == KEY_LEFT || cmd == KEY_RIGHT || cmd == KEY_UP || cmd == KEY_DOWN) {
-            draw__empty_circle_bmp(bmp, circle.x, circle.y);
+            //draw__empty_circle_bmp(bmp, circle.x, circle.y);
             move_circle(cmd);
             draw__colored_circle_bmp(bmp, circle.x, circle.y);
             draw_circle();     
             /*Sync with Shared memory image*/
+            //load_bmp_to_shm(bmp, ptr);
         }
     }
     

@@ -5,6 +5,11 @@
 #include <time.h>
 #include <stdlib.h>
 
+// Typedef for circle struct
+typedef struct {
+    int x,y;
+}CIRCLE;
+
 void init_console_ui() {
 
     // Initialize curses mode
