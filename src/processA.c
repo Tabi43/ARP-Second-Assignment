@@ -3,64 +3,65 @@
 
 /*Bitmap object*/
 bmpfile_t * bmp;
+
 /*Data type for define a BGRA pixel*/
 rgb_pixel_t pixel = {255, 0, 0, 0};
-rgb_pixel_t empty_pixel = {0, 0, 0, 0};
+rgb_pixel_t empty_pixel = {255, 255, 255, 0};
+
 int old_x, old_y; //Cordinate of the circle on the interface
 
 /*Shared memory*/
 int shm_fd; 
-void * ptr;
+rgb_pixel_t * ptr;
 
 /*Print counter*/
 int print_counter = 0;
 
+/*Semaphores*/ 
+sem_t * sem_id1;
+sem_t * sem_id2;
+
 bool take_snapshot(){
     char path[20];
 
+    snprintf(path, 20, "out/%d.bmp", print_counter);
+    print_counter += 1;
 
-    /*snprintf(path, 20, "%s%d.bmp", out_bmp, print_counter);
-    print_counter++;
-*/
-    for(int i = SM_HEIGHT/2; i < SM_HEIGHT; i++){
-        for(int j = SM_WIDTH/2; j < SM_WIDTH; j++){
-            bmp_set_pixel(bmp, i, j, pixel);
-        }
-    }
-
-    bmp_save(bmp, "test.bmp");
-
-   
+    bmp_save(bmp, path);   
 }
 
-void draw__colored_circle_bmp(bmpfile_t * bmp, int xc, int yc){
-    const int radius = 30;    
-    /*for (int i = xc-radius; i <xc+radius; i++){
-        for(int j = yc-radius; j<yc+radius; j++){
-            if(sqrt(i*i + j*j) < radius) {
-                bmp_set_pixel(bmp, i, j, pixel);
+void draw__colored_circle_bmp(bmpfile_t * bmp, int xc, int yc){   
+  for(int x = -RADIUS; x <= RADIUS; x++) {
+        for(int y = -RADIUS; y <= RADIUS; y++) {
+        // If distance is smaller, point is within the circle
+            if(sqrt(x*x + y*y) < RADIUS) {
+                /*
+                * Color the pixel at the specified (x,y) position
+                * with the given pixel values
+                */
+                bmp_set_pixel(bmp, xc + x, yc + y, pixel);
             }
         }
-    }*/   
+    }
 }
 
 void draw__empty_circle_bmp(bmpfile_t * bmp, int xc, int yc){
-    const int radius = 30;    
-    for (int i = xc-radius; i <xc+radius; i++){
-        for(int j = yc-radius; j<yc+radius; j++){
-            if(sqrt(i*i + j*j) < radius) {
-                bmp_set_pixel(bmp, i, j, empty_pixel);
+    for(int x = -RADIUS; x <= RADIUS; x++) {
+        for(int y = -RADIUS; y <= RADIUS; y++) {
+        // If distance is smaller, point is within the circle
+            if(sqrt(x*x + y*y) < RADIUS) {
+                /*
+                * Color the pixel at the specified (x,y) position
+                * with the given pixel values
+                */
+                bmp_set_pixel(bmp, xc + x, yc + y, empty_pixel);
             }
         }
     }
 }
 
-void load_bmp_to_shm(bmpfile_t * bmp, int * ptr){
-    int pos = 0;
-
-    /*Open semaphore*/ 
-    sem_t * sem_id1 = sem_open(sem_path_1, 0);
-    sem_t * sem_id2 = sem_open(sem_path_2, 0);
+void load_bmp_to_shm(bmpfile_t * bmp, rgb_pixel_t * ptr){
+    int pos = 0;   
 
     /*Sem wait*/
     sem_wait(sem_id2);
@@ -68,17 +69,23 @@ void load_bmp_to_shm(bmpfile_t * bmp, int * ptr){
     /*Loading pixel*/
     for(int i = 0; i < SM_HEIGHT; i++){
         for(int j = 0; j < SM_WIDTH; j++){
-            pos = (i*SM_WIDTH)+j+1;
-            ptr[pos] = bmp_get_pixel(bmp,i,j)->blue; 
-            ptr[pos+COLOR_SEG] = bmp_get_pixel(bmp,i,j)->green; 
-            ptr[pos+COLOR_SEG+COLOR_SEG] = bmp_get_pixel(bmp,i,j)->red; 
+            pos = (i*SM_WIDTH)+j+1; 
+            ptr++;             
+            ptr = bmp_get_pixel(bmp,i,j);                      
         }
     }
 
     /*sem signal*/
-    sem_post(sem_id1); 
-    sem_close(sem_id1);
-    sem_close(sem_id2);
+    sem_post(sem_id1);    
+}
+
+void print_nc(char * s){
+  mvprintw(LINES - 1, 1, s);
+  refresh();
+  sleep(1);
+  for(int j = 0; j < COLS - BTN_SIZE_X - 2; j++) {
+      mvaddch(LINES - 1, j, ' ');
+  }
 }
 
 /*Producer-Server*/
@@ -87,31 +94,24 @@ int main(int argc, char *argv[])
     // Utility variable to avoid trigger resize event on launch
     int first_resize = TRUE;
 
+    //Open semaphores
+    sem_id1 = sem_open(sem_path_1, 0);
+    sem_id2 = sem_open(sem_path_2, 0);
+
     // Initialize UI
     init_console_ui();
 
-    /*Create the bmp object*/
-    bmp = bmp_create(SM_WIDTH, SM_HEIGHT, 4);     
+    // Instantiate bitmap
+    bmp = bmp_create(SM_WIDTH, SM_HEIGHT, DEPTH);
 
-    /*Open shared memory*/
-    shm_fd = shm_open(shm_name, O_WRONLY, 0666);
-    if (shm_fd == 1) {
-        printf("Shared memory segment failed\n");
-        exit(1);
-    }
-    /*resizes memory region to the correct size*/
+    // create the shared memory object
+    shm_fd = shm_open(shm_name, O_CREAT | O_RDWR, 0666);
+
+    /* configure the size of the shared memory object */
     ftruncate(shm_fd, SHM_SIZE);
 
-    ptr = mmap(0, SHM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
-
-    for(int i = SM_HEIGHT/2; i < SM_HEIGHT; i++){
-        for(int j = SM_WIDTH/2; j < SM_WIDTH; j++){
-            bmp_set_pixel(bmp, i, j, pixel);
-        }
-    }
-    
-
-    bmp_save(bmp, "test.bmp");
+    /* memory map the shared memory object */
+    ptr = mmap(0, SHM_SIZE, PROT_WRITE, MAP_SHARED, shm_fd, 0);
 
     // Infinite loop
     while (TRUE)
@@ -149,12 +149,12 @@ int main(int argc, char *argv[])
 
         // If input is an arrow key, move circle accordingly...
         else if(cmd == KEY_LEFT || cmd == KEY_RIGHT || cmd == KEY_UP || cmd == KEY_DOWN) {
-            //draw__empty_circle_bmp(bmp, circle.x, circle.y);
+            draw__empty_circle_bmp(bmp, circle.x*20, circle.y*20);
             move_circle(cmd);
-            draw__colored_circle_bmp(bmp, circle.x, circle.y);
+            draw__colored_circle_bmp(bmp, circle.x*20, circle.y*20);
             draw_circle();     
             /*Sync with Shared memory image*/
-            //load_bmp_to_shm(bmp, ptr);
+            load_bmp_to_shm(bmp, ptr);
         }
     }
     
