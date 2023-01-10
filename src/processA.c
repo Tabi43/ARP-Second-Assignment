@@ -64,28 +64,26 @@ void load_bmp_to_shm(bmpfile_t * bmp, rgb_pixel_t * ptr){
     int pos = 0;   
 
     /*Sem wait*/
-    sem_wait(sem_id2);
+    sem_wait(sem_id1);
 
     /*Loading pixel*/
-    for(int i = 0; i < SM_HEIGHT; i++){
-        for(int j = 0; j < SM_WIDTH; j++){
+    for(int i = 0; i < SM_WIDTH; i++){
+        for(int j = 0; j < SM_HEIGHT; j++){
             pos = (i*SM_WIDTH)+j+1; 
             ptr++;             
-            ptr = bmp_get_pixel(bmp,i,j);                      
+            /*BGRA*/
+            rgb_pixel_t * tmp_p = bmp_get_pixel(bmp,i,j);
+            int b = tmp_p->blue;
+            int g = tmp_p->green;
+            int r = tmp_p->red;
+            int a = tmp_p->alpha;
+            rgb_pixel_t alfio = {b,g,r,a};          
+            *ptr = alfio;                
         }
     }
 
     /*sem signal*/
-    sem_post(sem_id1);    
-}
-
-void print_nc(char * s){
-  mvprintw(LINES - 1, 1, s);
-  refresh();
-  sleep(1);
-  for(int j = 0; j < COLS - BTN_SIZE_X - 2; j++) {
-      mvaddch(LINES - 1, j, ' ');
-  }
+    sem_post(sem_id2);    
 }
 
 /*Producer-Server*/
@@ -149,9 +147,11 @@ int main(int argc, char *argv[])
 
         // If input is an arrow key, move circle accordingly...
         else if(cmd == KEY_LEFT || cmd == KEY_RIGHT || cmd == KEY_UP || cmd == KEY_DOWN) {
-            draw__empty_circle_bmp(bmp, circle.x*20, circle.y*20);
+            float scale_x = SM_WIDTH/(COLS-BTN_SIZE_X);
+            float scale_y = SM_HEIGHT/LINES;
+            draw__empty_circle_bmp(bmp, floor(circle.x*scale_x), floor(circle.y*scale_y));
             move_circle(cmd);
-            draw__colored_circle_bmp(bmp, circle.x*20, circle.y*20);
+            draw__colored_circle_bmp(bmp, floor(circle.x*scale_x), floor(circle.y*scale_y));
             draw_circle();     
             /*Sync with Shared memory image*/
             load_bmp_to_shm(bmp, ptr);

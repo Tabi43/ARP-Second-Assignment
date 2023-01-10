@@ -108,20 +108,44 @@ int main(int argc, char const *argv[])
     while (TRUE) {       
 
         /*Wait to enter in the critic section*/
-        sem_wait(sem_id1);
+        sem_wait(sem_id2);
 
-        /*Find circle in SM*/
-        int line = find_circle(ptr);
-        if(line){
-            mvaddch(LINES/2, COLS/2, '1');
-            refresh();
-        }else{
-            mvaddch(LINES/2, COLS/2, '0');
-            refresh();
-        }
+        /*Create a temporal pointer*/
+        rgb_pixel_t * tmp_ptr = ptr+1;
+
+        int count = 1;
+        int sum_x = 0;
+        int sum_y = 0;
+
+        for(int i = 0; i < SM_WIDTH; i++){            
+            for(int j = 0; j < SM_HEIGHT; j++){   
+                
+                rgb_pixel_t * p = tmp_ptr++;
+                int r = p->red;
+                int g = p->green;
+                int b = p->blue;
+                int a = p->alpha;
+
+                /*Searching colored pixel*/   
+                if((r < 255) || (g < 255) || (b < 255)){                   
+                    sum_x += i;
+                    sum_y += j;
+                    count++;
+                }
+            }            
+        }        
+
+        int x = sum_x/count;
+        int y = sum_y/count;
+
+        float scale_x = SM_WIDTH/COLS;
+        float scale_y = SM_HEIGHT/LINES;      
+        
+        mvaddch(y/scale_y, x/scale_x, '0');
+        refresh();        
 
         /*Signal exiting from the critic section*/
-        sem_post(sem_id2);  
+        sem_post(sem_id1);  
 
         // Get input in non-blocking mode
         int cmd = getch();
@@ -135,11 +159,7 @@ int main(int argc, char const *argv[])
                 reset_console_ui();
             }
         }
-
-        else {
-            //mvaddch(LINES/2, COLS/2, '0');
-            refresh();
-        }
+        
     }
 
     endwin();
