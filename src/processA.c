@@ -86,6 +86,16 @@ void load_bmp_to_shm(bmpfile_t * bmp, rgb_pixel_t * ptr){
     sem_post(sem_id2);    
 }
 
+/*Reset function to clear all bitmap obj
+after a resize of the window*/
+void reset_bmp(bmpfile_t * bmp) {
+    for(int i = 0; i < SM_WIDTH; i++){
+        for(int j = 0; j < SM_HEIGHT; j++){
+               bmp_set_pixel(bmp, i, j, empty_pixel);
+        }
+    }
+}
+
 /*Producer-Server*/
 int main(int argc, char *argv[])
 {
@@ -124,6 +134,11 @@ int main(int argc, char *argv[])
             }
             else {
                 reset_console_ui();
+                reset_bmp(bmp);
+                float scale_x = SM_WIDTH/(COLS-BTN_SIZE_X);
+                float scale_y = SM_HEIGHT/LINES;
+                draw__colored_circle_bmp(bmp, floor(circle.x*scale_x), floor(circle.y*scale_y));
+                load_bmp_to_shm(bmp, ptr);
             }
         }
 
