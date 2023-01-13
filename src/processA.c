@@ -5,10 +5,8 @@
 bmpfile_t * bmp;
 
 /*Data type for define a BGRA pixel*/
-rgb_pixel_t pixel = {255, 0, 0, 0};
-rgb_pixel_t empty_pixel = {255, 255, 255, 0};
-
-int old_x, old_y; //Cordinate of the circle on the interface
+rgb_pixel_t pixel = {255, 0, 0, 0}; //Color of the circle
+rgb_pixel_t empty_pixel = {255, 255, 255, 0}; //White pixel
 
 /*Shared memory*/
 int shm_fd; 
@@ -21,6 +19,8 @@ int print_counter = 0;
 sem_t * sem_id1;
 sem_t * sem_id2;
 
+/* Save the current bitmap object to 
+out directory starting from 0 */
 bool take_snapshot(){
     char path[20];
 
@@ -30,6 +30,8 @@ bool take_snapshot(){
     bmp_save(bmp, path);   
 }
 
+/*Draw a colored circle getting the bitmap object and
+the center of the circle*/
 void draw__colored_circle_bmp(bmpfile_t * bmp, int xc, int yc){   
   for(int x = -RADIUS; x <= RADIUS; x++) {
         for(int y = -RADIUS; y <= RADIUS; y++) {
@@ -45,6 +47,8 @@ void draw__colored_circle_bmp(bmpfile_t * bmp, int xc, int yc){
     }
 }
 
+/*Draw a white circle getting the bitmap object and
+the center of the circle*/
 void draw__empty_circle_bmp(bmpfile_t * bmp, int xc, int yc){
     for(int x = -RADIUS; x <= RADIUS; x++) {
         for(int y = -RADIUS; y <= RADIUS; y++) {
