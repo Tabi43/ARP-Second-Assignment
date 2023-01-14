@@ -1,11 +1,13 @@
 # Second Assignment ARP
+
 The second assignment consist of a simulation of an industrial situation. There is two process (A and B) with their own window. 
 On the window A We have a UI to control the position of a semplified circle and a simple print button which is used to take a snapshot of the current shared memory. The user can control the position of the circle by the arrow keys on the keyboard. At any change of the circle's position the process copy a bitmap image to the shared memory.
 In the window B we have the position of circle's center in real time analizing the shared memory.
 
 All snapshot are saved inside the directory ```/out```. Each snapshot is numbered from 0.
 
-# Installing and Run
+## Installing and Run
+----------------------
 To compile the whole simulation is provided a shell script runnable by:
 ```
     $ ./compile.sh
@@ -29,7 +31,8 @@ Then you can run the simulation buy running directly the master process or runni
 ```
     $ ./bin/master
 ```
-# User Guide 
+## User Guide
+----------------------
 The user, after having followed the instructions to compile the code, will see the simulation of the project. 
 1. The simulation will open two windows: one for the moving image simulation and one for the position trace of the center of the image.
     1. In the first window, you will see a spot that you can move around using the arrow keys. This simulates the movement of a video camera.
@@ -44,7 +47,8 @@ The user, after having followed the instructions to compile the code, will see t
 
 
 
-# How it works
+## How it works
+----------------------
 *	The master process forks two child processes (processA and processB) using the "spawn" function. These processes are responsible for simulating the moving image and extracting the feature from the acquired moving image, respectively. The master process also instantiates shared memory and semaphores for synchronization between the two processes.
 *	Process A is responsible for simulating the moving image. It uses the ncurses library to create a window where the user can move a spot using arrow keys.
 	* The position of the spot is used to create an image in the shared memory. This image is a colored circle in the center of the window.
@@ -70,6 +74,7 @@ The user, after having followed the instructions to compile the code, will see t
 	    * The mvaddch function is used to update the position of a circle on the screen in real-time as the user moves the camera.
         * The refresh function is used to update the window and display the changes made.
 	    * The endwin function is used to end the ncurses session and restore the terminal to its original state.
+
 
 
 
